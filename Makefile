@@ -18,6 +18,8 @@ clean :
 
 all : $(NAME)
 
+fclean : clean
+
 re : clean $(NAME)
 
 .PHONY: re all

@@ -19,8 +19,6 @@ typedef struct s_inputs
   char  **last_cmd;
   char  *first_cmd_with_path;
   char  *last_cmd_with_path;
-  char  *infile_with_path;
-  char  *outfile_with_path;
   int   *fd_pipe;
   char  **envp;
   int   there_is_error;
