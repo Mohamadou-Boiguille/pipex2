@@ -13,14 +13,17 @@
 
 typedef struct s_inputs
 {
+  char  **path;
   char  **input_array;
   char  **first_cmd;
   char  **last_cmd;
-  char  **path;
+  char  *first_cmd_with_path;
+  char  *last_cmd_with_path;
+  char  *infile_with_path;
+  char  *outfile_with_path;
   int   *fd_pipe;
-  char  *last_error_code_ptr;
-  char  *cmd_with_path;
   char  **envp;
+  int   there_is_error;
   int   len;
 }         t_inputs;
 
