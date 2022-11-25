@@ -1,5 +1,35 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_mini_libft.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: moboigui <moboigui@42.fr>                  +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/11/24 22:42:47 by moboigui          #+#    #+#             */
+/*   Updated: 2022/11/24 22:42:49 by moboigui         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "pipex.h"
 #include <stdint.h>
+
+int	ft_strncmp(const char *s1, const char *s2, size_t len)
+{
+	size_t	i;
+
+	i = 0;
+	if (!len || (!s1 && !s2))
+		return (0);
+	while (i < len)
+	{
+		if ((unsigned char)s1[i] != (unsigned char)s2[i])
+			return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+		if (!s1[i])
+			break ;
+		i++;
+	}
+	return (0);
+}
 
 void	*ft_memcpy(void *d, const void *s, int l)
 {
@@ -13,32 +43,6 @@ void	*ft_memcpy(void *d, const void *s, int l)
 		*(char *)d++ = *(char *)s++;
 	}
 	return (dest);
-}
-
-char	*ft_str_realloc(char* ptr, size_t size)
-{
-    void *new;
-
-    if (!ptr)
-	{
-        new = malloc(size);
-        if (!new)
-			return (NULL);
-    }
-	else
-	{
-        if (ft_strlen(ptr) + 1 < size)
-		{
-            new = malloc(size);
-            if (!new)
-				return (NULL);
-            ft_memcpy(new, ptr, ft_strlen(ptr) + 1);
-            free(ptr);
-        }
-		else
-            new = ptr;
-    }
-    return (new);
 }
 
 size_t	ft_strlen(char const *s)

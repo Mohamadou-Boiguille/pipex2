@@ -1,134 +1,80 @@
-#include <stddef.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include "pipex.h"
 
-int		length_of_first_command;
-
-char **set_env_variables(void)
+int main(int argc, char **argv, char **envp)
 {
-  char **envp = malloc(5 * sizeof(char *));
-  envp[0] = "PATH=/bin:/usr/bin";
-  envp[1] = NULL;
-  return (envp);
-}
+	int       pid1;
+	t_inputs *input_set;
 
-void	ft_free_array(char **str_arr)
-{
-	int	i;
-
-	i = 0;
-	if (!str_arr)
-		return ;
-	while (str_arr[i] != NULL)
-		free(str_arr[i++]);
-	free(str_arr);
-}
-
-int	not_enough_args(int nb_of_args)
-{
-	if (nb_of_args < 5)
-  {
-    perror("input is less than 4");
-		return (0);
-  }
-	return (1);
-}
-
-char	*create_cmd_str_with_path(char *cmd)
-{
-	char	*cmd_str_with_path;
-
-	cmd_str_with_path = malloc(10 + ft_strlen(cmd));
-	ft_strlcpy(cmd_str_with_path, "/usr/bin/", 10);
-	ft_strlcat(cmd_str_with_path, cmd, 10 + ft_strlen(cmd));
-	return (cmd_str_with_path);
-}
-
-int	ft_execute_first_cmd(char *cmd_input_format, char *file)
-{
-	char	**cmd_and_args;
-	char	*cmd_str_with_path;
-
-	cmd_and_args = ft_split_and_add_file(cmd_input_format, ' ', file);
-	//cmd_str_with_path = create_cmd_str_with_path(cmd_and_args[0]);
-	if (execve(cmd_and_args[0], cmd_and_args, NULL) == -1)
-  {
-    perror("execution error");
-    return (-1);
-  }
-	ft_free_array(cmd_and_args);
-	free(cmd_str_with_path);
-	return (1);
-}
-
-int	ft_execute_last_cmd(char *cmd_input_format)
-{
-	int		i;
-	char	**cmd_and_args;
-	char	*cmd_str_with_path;
-
-	i = 0;
-	cmd_and_args = ft_split_and_add_file(cmd_input_format, ' ', NULL);
-	cmd_str_with_path = create_cmd_str_with_path(cmd_and_args[0]);
-	i = execve(cmd_str_with_path, cmd_and_args, NULL);
-	ft_free_array(cmd_and_args);
-	free(cmd_str_with_path);
-	return (1);
-}
-
-int	main(int argc, char **argv)
-{
-	int	pid1;
-	int	pid2;
-	int	fd[2];
-	int	fd_memory;
-	int	retfd;
-
-	if (!not_enough_args(argc))
-		return (127);
-	if (pipe(fd) == -1)
-	{
-		perror("pipe error");
-		return (-1);
-	}
+	check_valid_nb_of_args(argc);
+	input_set = init_input_set(argc, argv, envp);
+	if (!input_set)
+		return (errno);
 	pid1 = fork();
-	if (pid1 == -1)
+	errno = 0;
+	if (pid1 != -1)
 	{
-		perror("fork error");
-		return (-1);
+		if (pid1 == 0)
+			ft_child_process(input_set);
+		if (pid1 != 0)
+		{
+			wait(NULL);
+			if (input_set->there_is_error)
+				return errno;
+			ft_parent_process(input_set);
+		}
 	}
-	if (pid1 == 0)
+	ft_free_struct(input_set);
+	return (errno);
+}
+
+t_inputs *init_input_set(int len, char **input, char **envp)
+{
+	t_inputs *input_set;
+	char *    complete_filename;
+
+	input_set = malloc(sizeof(t_inputs));
+	if (!input_set)
+		return (NULL);
+	input_set->input_array = input;
+	input_set->path = ft_get_path_array(envp);
+	complete_filename = create_filename_with_path(input_set->path, input[1]);
+	input_set->first_cmd = ft_input_to_shell_format(input[2], complete_filename);
+	input_set->last_cmd = ft_input_to_shell_format(input[len - 2], NULL);
+	input_set->fd_pipe = ft_create_pipe();
+	input_set->envp = envp;
+	input_set->first_cmd_with_path = NULL;
+	input_set->last_cmd_with_path = NULL;
+	input_set->len = len;
+	if (!ft_is_cmds_executables(input_set))
 	{
-		dup2(fd[1], STDOUT_FILENO);
-		close(fd[0]);
-		close(fd[1]);
-		if (ft_execute_first_cmd(argv[2], argv[1]) == -1)
-      return (127);
+		ft_free_struct(input_set);
+		perror("invalid command");
+		return (NULL);
 	}
-	pid2 = fork();
-	if (pid2 == -1)
-	{
-		perror("fork error");
-		return (-1);
-	}
-	if (pid2 == 0)
-	{
-		dup2(fd[0], STDIN_FILENO);
-		retfd = open(argv[4], O_CREAT | O_RDWR, S_IRWXO | S_IRWXU | S_IRWXG);
-		if (retfd == -1)
-    {
-      perror("open file error");
-			return (0);
-    }
-		dup2(retfd, STDOUT_FILENO);
-		close(fd[1]);
-		close(fd[0]);
-		ft_execute_last_cmd(argv[3]);
-	}
-	close(fd[0]);
-	close(fd[1]);
-	waitpid(pid1, NULL, 0);
-	waitpid(pid2, NULL, 0);
-	return (0);
+	return (input_set);
+}
+
+void ft_child_process(t_inputs *input)
+{
+	if (ft_check_if_infile_exist_and_access(input->first_cmd[0]))
+		return;
+	dup2(input->fd_pipe[1], STDOUT_FILENO);
+	ft_close_fds(input);
+	if (execve(input->first_cmd_with_path, input->first_cmd, input->envp) == -1)
+		input->there_is_error = 1;
+}
+
+void ft_parent_process(t_inputs *input)
+{
+	int file_fd;
+
+	file_fd = open(input->last_cmd[0], O_CREAT | O_TRUNC | O_WRONLY, 0666);
+	if (file_fd == -1)
+		return;
+	dup2(input->fd_pipe[0], STDIN_FILENO);
+	dup2(file_fd, STDOUT_FILENO);
+	ft_close_fds(input);
+	if (execve(input->last_cmd_with_path, input->last_cmd, input->envp) == -1)
+		input->there_is_error = errno;
+	perror("execve error");
 }

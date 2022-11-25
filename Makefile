@@ -1,7 +1,10 @@
 NAME= pipex
 SRCS= ft_split.c\
 	start.c\
-	ft_mini_libft.c
+	ft_mini_libft.c\
+	ft_utils1.c\
+	ft_utils2.c\
+	ft_creators.c
 OBJS= $(SRCS:.c=.o)
 HEADERS= pipex.h
 
