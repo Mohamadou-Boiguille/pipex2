@@ -6,87 +6,111 @@
 /*   By: moboigui <moboigui@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/24 22:41:18 by moboigui          #+#    #+#             */
-/*   Updated: 2022/11/24 22:42:25 by moboigui         ###   ########.fr       */
+/*   Updated: 2022/11/26 23:36:14 by moboigui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "libft/libft.h"
 #include "pipex.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/wait.h>
 
 int	main(int argc, char **argv, char **envp)
 {
-	int			pid1;
-	t_inputs	*input_set;
+	t_inputs	input_set;
 
-	check_valid_nb_of_args(argc);
-	input_set = init_input_set(argc, argv, envp);
-	if (!input_set)
-		return (errno);
-	pid1 = fork();
 	errno = 0;
-	if (pid1 != -1)
-	{
-		if (pid1 == 0)
-			ft_child_process(input_set);
-		if (pid1 != 0)
-		{
-			wait(NULL);
-			if (input_set->there_is_error)
-				return (errno);
-			ft_parent_process(input_set);
-		}
-	}
-	ft_free_struct(input_set);
+	check_valid_nb_of_args(argc);
+	init_set(&input_set, argc, argv, envp);
+	ft_fork_and_pipe(&input_set);
+	free(input_set.fd_pipe);
+	ft_free_splited_arrays(input_set.path);
 	return (errno);
 }
 
-t_inputs	*init_input_set(int len, char **input, char **envp)
+void	init_set(t_inputs *set, int len, char **argc, char **envp)
 {
-	t_inputs	*input_set;
-	char		*filename;
+	set->len = len;
+	set->envp = envp;
+	set->input = argc;
+	set->fd_pipe = ft_create_pipe();
+	set->path = ft_get_path_array(envp);
+	set->cmd_name = NULL;
+}
 
-	input_set = malloc(sizeof(t_inputs));
-	if (!input_set)
-		return (NULL);
-	input_set->input_array = input;
-	input_set->path = ft_get_path_array(envp);
-	entire_filename = create_filename_with_path(input_set->path, input[1]);
-	input_set->first_cmd = ft_input_to_shell_format(input[2], entire_filename);
-	input_set->last_cmd = ft_input_to_shell_format(input[len - 2], NULL);
-	input_set->fd_pipe = ft_create_pipe();
-	input_set->envp = envp;
-	input_set->first_cmd_with_path = NULL;
-	input_set->last_cmd_with_path = NULL;
-	input_set->len = len;
-	if (!ft_is_cmds_executables(input_set))
+void	ft_fork_and_pipe(t_inputs *set)
+{
+	int	pid1;
+	int	pid2;
+	int	pid_status;
+
+	pid1 = fork();
+	if (pid1 == -1)
+		return (perror("fork error"));
+	if (pid1 == 0)
+		infile_process(set);
+	if (!errno)
 	{
-		ft_free_struct(input_set);
-		perror("invalid command");
-		return (NULL);
+		pid2 = fork();
+		if (pid2 == -1)
+			return (perror("fork error"));
+		if (pid2 == 0)
+			outfile_process(set);
 	}
-	return (input_set);
+	ft_close_fds(set);
+	if (!errno)
+	{
+		waitpid(pid2, &pid_status, 0);
+		waitpid(pid1, &pid_status, 0);
+	}
 }
 
-void	ft_child_process(t_inputs *input)
+void	infile_process(t_inputs *set)
 {
-	if (ft_check_if_infile_exist_and_access(input->first_cmd[0]))
+	int	infile_fd;
+
+	infile_fd = open(set->input[1], O_RDONLY);
+	if (infile_fd == -1)
+	{
+		ft_error_message(set->input[1], NO_FILE);
 		return ;
-	dup2(input->fd_pipe[1], STDOUT_FILENO);
-	ft_close_fds(input);
-	if (execve(input->first_cmd_with_path, input->first_cmd, input->envp) == -1)
-		input->there_is_error = 1;
+	}
+	if (dup2(infile_fd, STDIN_FILENO) == -1)
+		return (perror("dup failed infile"));
+	if (dup2(set->fd_pipe[1], STDOUT_FILENO) == -1)
+		return (perror("dup failed pipe"));
+	ft_close_fds(set);
+	set->cmd_with_args = ft_split(set->input[2], ' ');
+	set->cmd_name = create_cmd_with_path(set->path, set->cmd_with_args[0]);
+	execve(set->cmd_name, set->cmd_with_args, set->envp);
+	ft_free_splited_arrays(set->cmd_with_args);
+	free(set->cmd_name);
+	ft_error_message(set->input[2], CMD_NOT_FOUND);
+	errno = 127;
 }
 
-void	ft_parent_process(t_inputs *input)
+void	outfile_process(t_inputs *set)
 {
-	int	file_fd;
+	int	outfile_fd;
 
-	file_fd = open(input->last_cmd[0], O_CREAT | O_TRUNC | O_WRONLY, 0666);
-	if (file_fd == -1)
+	outfile_fd = open(set->input[set->len - 1], O_CREAT | O_TRUNC | O_RDWR,
+			00666);
+	if (outfile_fd == -1)
+	{
+		ft_error_message(set->input[set->len - 1], NO_FILE);
 		return ;
-	dup2(input->fd_pipe[0], STDIN_FILENO);
-	dup2(file_fd, STDOUT_FILENO);
-	ft_close_fds(input);
-	if (execve(input->last_cmd_with_path, input->last_cmd, input->envp) == -1)
-		input->there_is_error = errno;
-	perror("execve error");
+	}
+	if (dup2(set->fd_pipe[0], STDIN_FILENO) == -1)
+		return (perror("dup failed pipe2"));
+	if (dup2(outfile_fd, STDOUT_FILENO) == -1)
+		return (perror("dup failed outfile"));
+	ft_close_fds(set);
+	set->cmd_with_args = ft_split(set->input[set->len - 2], ' ');
+	set->cmd_name = create_cmd_with_path(set->path, set->cmd_with_args[0]);
+	execve(set->cmd_name, set->cmd_with_args, set->envp);
+	ft_free_splited_arrays(set->cmd_with_args);
+	free(set->cmd_name);
+	ft_error_message(set->input[set->len - 2], CMD_NOT_FOUND);
+	errno = 127;
 }

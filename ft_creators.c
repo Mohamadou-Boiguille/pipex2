@@ -6,7 +6,7 @@
 /*   By: moboigui <moboigui@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/24 22:43:10 by moboigui          #+#    #+#             */
-/*   Updated: 2022/11/24 22:45:37 by moboigui         ###   ########.fr       */
+/*   Updated: 2022/11/27 00:58:52 by moboigui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,15 +26,14 @@ int	*ft_create_pipe(void)
 	}
 	return (fd);
 }
-
+/*
 char	**ft_input_to_shell_format(char *cmd_and_args, char *filename)
 {
-	int		cmd_array_size;
 	char	*shell_format_cmd;
 	char	**cmd_array;
 	int		str_size;
 
-	str_size = EXTRA_SPACE_AND_END_OF_STR + ft_strlen(cmd_and_args);
+	str_size = TWO_CHARS + ft_strlen(cmd_and_args);
 	if (filename)
 		str_size += ft_strlen(filename);
 	shell_format_cmd = ft_calloc(str_size, sizeof(char));
@@ -48,12 +47,11 @@ char	**ft_input_to_shell_format(char *cmd_and_args, char *filename)
 	free(shell_format_cmd);
 	return (cmd_array);
 }
-
+*/
 char	**ft_get_path_array(char **env_varibles)
 {
 	int		i;
 	char	**path_array;
-	char	*path_str;
 
 	i = 0;
 	path_array = NULL;
@@ -88,10 +86,7 @@ char	*create_cmd_with_path(char **path, char *cmd)
 		ft_strlcat(cmd_with_path, "/", len);
 		ft_strlcat(cmd_with_path, cmd, len);
 		if (!access(cmd_with_path, X_OK))
-		{
-			errno = 0;
 			return (cmd_with_path);
-		}
 		free(cmd_with_path);
 		i++;
 	}

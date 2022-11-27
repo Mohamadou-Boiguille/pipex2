@@ -6,12 +6,22 @@
 /*   By: moboigui <moboigui@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/24 22:34:28 by moboigui          #+#    #+#             */
-/*   Updated: 2022/11/24 22:34:29 by moboigui         ###   ########.fr       */
+/*   Updated: 2022/11/26 23:30:26 by moboigui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 #include <stddef.h>
+
+void	ft_error_message(char *filename, int error)
+{
+		write(2, "pipex: line 1:  ", 15);
+		write(2, filename, ft_strlen(filename));
+		if (error == NO_FILE)
+			write(2, ": No such file or directory\n", 28);
+		if (error == CMD_NOT_FOUND)
+			write(2, ": command not found\n", 20);
+}
 
 void	ft_free_splited_arrays(char **str_arr)
 {
@@ -23,22 +33,6 @@ void	ft_free_splited_arrays(char **str_arr)
 	while (str_arr[i] != NULL)
 		free(str_arr[i++]);
 	free(str_arr);
-}
-
-void	ft_free_struct(t_inputs *inputs)
-{
-	if (inputs)
-	{
-		if (inputs->first_cmd_with_path)
-			free(inputs->first_cmd_with_path);
-		if (inputs->last_cmd_with_path)
-			free(inputs->last_cmd_with_path);
-		free(inputs->fd_pipe);
-		ft_free_splited_arrays(inputs->first_cmd);
-		ft_free_splited_arrays(inputs->last_cmd);
-		ft_free_splited_arrays(inputs->path);
-		free(inputs);
-	}
 }
 
 void	ft_close_fds(t_inputs *input_set)

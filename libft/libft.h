@@ -6,7 +6,7 @@
 /*   By: moboigui <moboigui@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/14 06:08:25 by moboigui          #+#    #+#             */
-/*   Updated: 2022/11/14 06:08:27 by moboigui         ###   ########.fr       */
+/*   Updated: 2022/11/26 13:18:34 by moboigui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ void				*ft_memset(void *s, int c, int n);
 char				*ft_strchr(const char *s, int c);
 size_t				ft_strlcat(char *dst, const char *src, size_t size);
 size_t				ft_strlcpy(char *dst, const char *src, size_t size);
-int					ft_strlen(char const *s);
+size_t				ft_strlen(char const *s);
 int					ft_strncmp(const char *s1, const char *s2, size_t len);
 char				*ft_strnstr(const char *str1, const char *str2, int size);
 char				*ft_strchr(const char *s, int c);
@@ -65,8 +65,8 @@ void				ft_putendl_fd(char *s, int fd);
 t_list				*ft_lstnew(void *content);
 int					ft_lstsize(t_list *lst);
 t_list				*ft_lstlast(t_list *lst);
-void				ft_lstadd_front(t_list **alst, t_list *new);
-void				ft_lstadd_back(t_list **alst, t_list *new);
+void				ft_lstadd_front(t_list **alst, t_list *new_);
+void				ft_lstadd_back(t_list **alst, t_list *new_);
 void				ft_lstdelone(t_list *lst, void (*del)(void *));
 void				ft_lstclear(t_list **lst, void (*del)(void *));
 void				ft_lstiter(t_list *lst, void (*f)(void *));

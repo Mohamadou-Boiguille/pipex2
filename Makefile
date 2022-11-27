@@ -1,23 +1,27 @@
 NAME= pipex
-SRCS= ft_split.c\
-	start.c\
-	ft_mini_libft.c\
-	ft_utils1.c\
-	ft_utils2.c\
-	ft_creators.c
+SRCS=	start.c\
+		ft_utils.c\
+		ft_checkers.c\
+		ft_creators.c
 OBJS= $(SRCS:.c=.o)
+INCLUDE= -I./includes -I./libft
 HEADERS= pipex.h
+LIB=-L./libft/ -lft
+LIBFT= libft/libft.a
+CFLAGS = -g -Wall -Wextra -Werror
 
 
-$(NAME) : $(OBJS)
-	$(CC) $(FLAGS) $(OBJS) -o $@
+$(NAME) : $(LIBFT) $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@ $(LIB)
 
-%.o: %.c $(HEADERS)
-	$(CC) $(FLAGS) -g3 -I . -c $< -o $@
+%.o: %.c $(HEADERS) Makefile
+	$(CC) $(CFLAGS) -g3 -c $< -o $@
+
+$(LIBFT): ./libft/*.c
+	$(MAKE) bonus -C ./libft
 
 clean :
-	rm -rf *.o
-	rm -rf pipex
+	rm -rf *.o $(NAME)
 
 all : $(NAME)
 
@@ -25,4 +29,4 @@ fclean : clean
 
 re : clean $(NAME)
 
-.PHONY: re all
+.PHONY: re all fclean clean
