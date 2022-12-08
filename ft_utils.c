@@ -21,8 +21,10 @@ void	ft_error_message(char *filename, int error)
 	write(2, filename, ft_strlen(filename));
 	if (error == NO_FILE)
 		write(2, ": No such file or directory\n", 28);
-	if (error == CMD_NOT_FOUND)
+	else if (error == CMD_NOT_FOUND)
 		write(2, ": command not found\n", 20);
+	else if (error == PERM)
+		write(2, ": No such file or directory\n", 28);
 }
 
 void	ft_free_splited_arrays(char **str_arr)
@@ -35,12 +37,6 @@ void	ft_free_splited_arrays(char **str_arr)
 	while (str_arr[i] != NULL)
 		free(str_arr[i++]);
 	free(str_arr);
-}
-
-void	ft_close_fds(t_inputs *input_set)
-{
-	close(input_set->fd_pipe[0]);
-	close(input_set->fd_pipe[1]);
 }
 
 int	ft_find_nb_of_words(char *str)
@@ -83,4 +79,10 @@ char	handle_if_quoted(char **cmd_str)
 		i++;
 	}
 	return (character);
+}
+
+void	ft_free_struct(t_inputs *set)
+{
+	free(set->fd_pipe);
+	ft_free_splited_arrays(set->path);
 }

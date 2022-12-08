@@ -14,75 +14,97 @@
 #include "pipex.h"
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 int	main(int argc, char **argv, char **envp)
 {
 	t_inputs	input_set;
+	int			error_code;
 
-	errno = 0;
-	check_valid_nb_of_args(argc);
+	if (argc != 5)
+	{
+		perror("Wrong number of arguments");
+		exit(EXIT_FAILURE);
+	}
 	init_set(&input_set, argc, argv, envp);
-	ft_fork_and_pipe(&input_set);
+	error_code = ft_fork_and_pipe(&input_set);
 	free(input_set.fd_pipe);
 	ft_free_splited_arrays(input_set.path);
-	return (errno);
+	return (error_code);
 }
 
-void	ft_fork_and_pipe(t_inputs *set)
+int	ft_fork_and_pipe(t_inputs *set)
 {
 	int	pid1;
 	int	pid2;
 	int	pid_status;
 
+	pid2 = 2022;
 	pid1 = fork();
 	if (pid1 == -1)
-		return (perror("fork error"));
+		return (-1);
 	if (pid1 == 0)
 		infile_process(set);
 	pid2 = fork();
 	if (pid2 == -1)
-		return (perror("fork error"));
+		return (-1);
 	if (pid2 == 0)
 		outfile_process(set);
-	ft_close_fds(set);
+	close(set->fd_pipe[0]);
+	close(set->fd_pipe[1]);
 	waitpid(pid1, &pid_status, 0);
 	waitpid(pid2, &pid_status, 0);
+	return (WEXITSTATUS(pid_status));
 }
 
 void	infile_process(t_inputs *set)
 {
-	if (set->infile_fd == -1)
-	{
-		ft_error_message(set->input[1], NO_FILE);
+	if (path_doesnt_exist(set->input[1]))
 		return ;
-	}
-	if (dup2(set->infile_fd, STDIN_FILENO) <= -1)
+	if (no_have_file_permission(set->input[1], READ))
+		return ;
+	set->in_fd = open(set->input[1], O_RDONLY);
+	if (set->in_fd == -1)
+		ft_error_message(set->input[1], NO_FILE);
+	else if (dup2(set->in_fd, STDIN_FILENO) <= -1)
 		return (perror("dup failed infile"));
-	if (dup2(set->fd_pipe[1], STDOUT_FILENO) <= -1)
+	else if (dup2(set->fd_pipe[1], STDOUT_FILENO) <= -1)
 		return (perror("dup failed pipe"));
-	close(set->infile_fd);
-	ft_close_fds(set);
-	execute_cmd(set->input[2], set);
+	else
+	{
+		close(set->fd_pipe[0]);
+		close(set->fd_pipe[1]);
+		execute_cmd(set->input[2], set);
+	}
+	free(set->fd_pipe);
+	ft_free_splited_arrays(set->path);
+	exit(127);
 }
 
 void	outfile_process(t_inputs *set)
 {
-	set->outfile_fd = open(set->input[set->len - 1], O_CREAT | O_TRUNC | O_RDWR,
-			00666);
-	if (set->outfile_fd == -1)
-	{
-		ft_error_message(set->input[set->len - 1], NO_FILE);
+	if (path_doesnt_exist(set->input[set->len - 1]))
 		return ;
-	}
-	if (dup2(set->fd_pipe[0], STDIN_FILENO) == -1)
+	if (no_have_file_permission(set->input[set->len - 1], WRITE))
+		return ;
+	set->out_fd = open(set->input[set->len - 1], CREAT | TRUNC | RDWR, RWALL);
+	if (set->out_fd == -1)
+		ft_error_message(set->input[set->len - 1], NO_FILE);
+	else if (dup2(set->fd_pipe[0], STDIN_FILENO) == -1)
 		return (perror("dup failed pipe2"));
-	if (dup2(set->outfile_fd, STDOUT_FILENO) == -1)
+	else if (dup2(set->out_fd, STDOUT_FILENO) == -1)
 		return (perror("dup failed outfile"));
-	ft_close_fds(set);
-	close(set->outfile_fd);
-	execute_cmd(set->input[set->len - 2], set);
+	else
+	{
+		close(set->fd_pipe[0]);
+		close(set->fd_pipe[1]);
+		execute_cmd(set->input[set->len - 2], set);
+	}
+	free(set->fd_pipe);
+	ft_free_splited_arrays(set->path);
+	exit(127);
 }
 
 void	execute_cmd(char *cmd, t_inputs *set)
@@ -90,9 +112,12 @@ void	execute_cmd(char *cmd, t_inputs *set)
 	set->separator = handle_if_quoted(&cmd);
 	set->cmd_with_args = ft_split(cmd, set->separator);
 	set->cmd_name = create_cmd_with_path(set->path, set->cmd_with_args[0]);
-	execve(set->cmd_name, set->cmd_with_args, set->envp);
-	ft_free_splited_arrays(set->cmd_with_args);
+	if (set->cmd_name)
+		execve(set->cmd_name, set->cmd_with_args, set->added_env_var);
 	free(set->cmd_name);
+	ft_free_splited_arrays(set->cmd_with_args);
+	ft_free_splited_arrays(set->path);
+	free(set->fd_pipe);
 	ft_error_message(cmd, CMD_NOT_FOUND);
-    exit(127);
+	exit(127);
 }
