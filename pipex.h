@@ -18,7 +18,6 @@
 # include <fcntl.h>
 # include <limits.h>
 # include <stddef.h>
-# include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
 # include <sys/wait.h>
@@ -52,29 +51,25 @@ typedef struct s_inputs
 	int		err_code;
 }			t_inputs;
 
-int			no_have_file_permission(char *filename, int type);
-int			path_doesnt_exist(char *filename);
-int			cmd_is_executable(char *cmd_with_path);
-char		handle_if_quoted(char **cmd_str);
-void		execute_cmd(char *cmd, t_inputs *set);
-void		ft_error_message(char *filename, int error);
-int			no_outfile_access(t_inputs *set);
+//start.c
 int			ft_fork_and_pipe(t_inputs *set);
-void		infile_process(t_inputs *set);
-void		outfile_process(t_inputs *set);
-int			*ft_create_pipe(void);
+void		ft_infile_process(t_inputs *set);
+void		ft_outfile_process(t_inputs *set);
+void		ft_execute_cmd(char *cmd, t_inputs *set);
+//ft_utils.c
+void		ft_error_message(char *filename, int error);
+char		ft_handle_if_quoted(char **cmd_str);
 void		ft_free_splited_arrays(char **str_arr);
-int			ft_find_nb_of_words(char *str);
-char		**ft_input_to_shell_format(char *cmd_and_args, char *filename);
-char		**ft_get_path_array(char **env_varibles);
-int			no_infile_or_no_access(t_inputs *set);
-int			ft_check_outfile_access(char *filename);
 void		ft_free_struct(t_inputs *set);
-char		*create_cmd_with_path(char **path, char *cmd);
-char		*create_file_with_path(char **path, char *filename);
-int			ft_is_cmds_executables(t_inputs *input_set);
-void		init_set(t_inputs *set, int len, char **argc, char **added_env_var);
-void		ft_child_process(t_inputs *input);
-void		ft_parent_process(t_inputs *input);
-int			is_input_valid(int len);
+int			ft_find_nb_of_words(char *str);
+//ft_creators.c
+int			*ft_create_pipe(void);
+char		*ft_create_cmd_with_path(char **path, char *cmd);
+char		*ft_create_file_with_path(char **path, char *filename);
+char		**ft_get_path_array(char **env_varibles);
+void		ft_init_set(t_inputs *set, int len, char **argc, char **added_env_var);
+//ft_checkers.c
+int			ft_no_have_file_permission(char *filename, int type);
+int			ft_path_doesnt_exist(char *filename);
+int			ft_cmd_is_executable(char *cmd_with_path);
 #endif

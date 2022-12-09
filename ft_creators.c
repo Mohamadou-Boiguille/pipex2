@@ -10,9 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft/libft.h"
 #include "pipex.h"
-#include <stdio.h>
 
 int	*ft_create_pipe(void)
 {
@@ -48,7 +46,7 @@ char	**ft_get_path_array(char **env_varibles)
 	return (path_array);
 }
 
-char	*create_cmd_with_path(char **path, char *cmd)
+char	*ft_create_cmd_with_path(char **path, char *cmd)
 {
 	int		i;
 	int		len;
@@ -77,7 +75,7 @@ char	*create_cmd_with_path(char **path, char *cmd)
 	return (NULL);
 }
 
-char	*create_file_with_path(char **path, char *filename)
+char	*ft_create_file_with_path(char **path, char *filename)
 {
 	int		i;
 	int		len;
@@ -103,7 +101,7 @@ char	*create_file_with_path(char **path, char *filename)
 	return (NULL);
 }
 
-void	init_set(t_inputs *set, int len, char **argc, char **added_env_var)
+void	ft_init_set(t_inputs *set, int len, char **argc, char **added_env_var)
 {
 	extern char	**environ;
 

@@ -10,13 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft/libft.h"
 #include "pipex.h"
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 int	main(int argc, char **argv, char **envp)
 {
@@ -28,7 +22,7 @@ int	main(int argc, char **argv, char **envp)
 		perror("Wrong number of arguments");
 		exit(EXIT_FAILURE);
 	}
-	init_set(&input_set, argc, argv, envp);
+	ft_init_set(&input_set, argc, argv, envp);
 	error_code = ft_fork_and_pipe(&input_set);
 	free(input_set.fd_pipe);
 	ft_free_splited_arrays(input_set.path);
@@ -46,12 +40,12 @@ int	ft_fork_and_pipe(t_inputs *set)
 	if (pid1 == -1)
 		return (-1);
 	if (pid1 == 0)
-		infile_process(set);
+		ft_infile_process(set);
 	pid2 = fork();
 	if (pid2 == -1)
 		return (-1);
 	if (pid2 == 0)
-		outfile_process(set);
+		ft_outfile_process(set);
 	close(set->fd_pipe[0]);
 	close(set->fd_pipe[1]);
 	waitpid(pid1, &pid_status, 0);
@@ -59,11 +53,11 @@ int	ft_fork_and_pipe(t_inputs *set)
 	return (WEXITSTATUS(pid_status));
 }
 
-void	infile_process(t_inputs *set)
+void	ft_infile_process(t_inputs *set)
 {
-	if (path_doesnt_exist(set->input[1]))
+	if (ft_path_doesnt_exist(set->input[1]))
 		return ;
-	if (no_have_file_permission(set->input[1], READ))
+	if (ft_no_have_file_permission(set->input[1], READ))
 		return ;
 	set->in_fd = open(set->input[1], O_RDONLY);
 	if (set->in_fd == -1)
@@ -76,18 +70,18 @@ void	infile_process(t_inputs *set)
 	{
 		close(set->fd_pipe[0]);
 		close(set->fd_pipe[1]);
-		execute_cmd(set->input[2], set);
+		ft_execute_cmd(set->input[2], set);
 	}
 	free(set->fd_pipe);
 	ft_free_splited_arrays(set->path);
 	exit(127);
 }
 
-void	outfile_process(t_inputs *set)
+void	ft_outfile_process(t_inputs *set)
 {
-	if (path_doesnt_exist(set->input[set->len - 1]))
+	if (ft_path_doesnt_exist(set->input[set->len - 1]))
 		return ;
-	if (no_have_file_permission(set->input[set->len - 1], WRITE))
+	if (ft_no_have_file_permission(set->input[set->len - 1], WRITE))
 		return ;
 	set->out_fd = open(set->input[set->len - 1], CREAT | TRUNC | RDWR, RWALL);
 	if (set->out_fd == -1)
@@ -100,18 +94,18 @@ void	outfile_process(t_inputs *set)
 	{
 		close(set->fd_pipe[0]);
 		close(set->fd_pipe[1]);
-		execute_cmd(set->input[set->len - 2], set);
+		ft_execute_cmd(set->input[set->len - 2], set);
 	}
 	free(set->fd_pipe);
 	ft_free_splited_arrays(set->path);
 	exit(127);
 }
 
-void	execute_cmd(char *cmd, t_inputs *set)
+void	ft_execute_cmd(char *cmd, t_inputs *set)
 {
-	set->separator = handle_if_quoted(&cmd);
+	set->separator = ft_handle_if_quoted(&cmd);
 	set->cmd_with_args = ft_split(cmd, set->separator);
-	set->cmd_name = create_cmd_with_path(set->path, set->cmd_with_args[0]);
+	set->cmd_name = ft_create_cmd_with_path(set->path, set->cmd_with_args[0]);
 	if (set->cmd_name)
 		execve(set->cmd_name, set->cmd_with_args, set->added_env_var);
 	free(set->cmd_name);

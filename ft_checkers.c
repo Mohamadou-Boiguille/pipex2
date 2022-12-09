@@ -11,9 +11,8 @@
 /* ************************************************************************** */
 
 #include "pipex.h"
-#include <stdio.h>
 
-int	path_doesnt_exist(char *filename)
+int	ft_path_doesnt_exist(char *filename)
 {
 	char	*path_only;
 	char	*last_slash;
@@ -38,14 +37,14 @@ int	path_doesnt_exist(char *filename)
 	return (path_doesnt_exist);
 }
 
-int	cmd_is_executable(char *cmd_with_path)
+int	ft_cmd_is_executable(char *cmd_with_path)
 {
 	if (cmd_with_path == NULL)
 		return (0);
 	return (!access(cmd_with_path, X_OK));
 }
 
-int	no_have_file_permission(char *filename, int type)
+int	ft_no_have_file_permission(char *filename, int type)
 {
 	if (type == READ && access(filename, R_OK))
 	{
@@ -58,18 +57,4 @@ int	no_have_file_permission(char *filename, int type)
 		return (1);
 	}
 	return (0);
-}
-
-int	no_infile_or_no_access(t_inputs *set)
-{
-	int	file_access;
-
-	set->filename = create_file_with_path(set->path, set->input[1]);
-	if (set->filename == NULL)
-		return (errno);
-	else
-		file_access = access(set->filename, F_OK && R_OK);
-	if (file_access)
-		return (errno);
-	return (file_access);
 }

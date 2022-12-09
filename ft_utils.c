@@ -10,10 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft/libft.h"
 #include "pipex.h"
-#include <stddef.h>
-#include <stdio.h>
 
 void	ft_error_message(char *filename, int error)
 {
@@ -55,7 +52,7 @@ int	ft_find_nb_of_words(char *str)
 	return (nb_of_words);
 }
 
-char	handle_if_quoted(char **cmd_str)
+char	ft_handle_if_quoted(char **cmd_str)
 {
 	int		i;
 	int		nb_of_quotes;
