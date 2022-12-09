@@ -70,6 +70,7 @@ void	ft_infile_process(t_inputs *set)
 	{
 		close(set->fd_pipe[0]);
 		close(set->fd_pipe[1]);
+        close(set->in_fd);
 		ft_execute_cmd(set->input[2], set);
 	}
 	free(set->fd_pipe);
@@ -94,6 +95,7 @@ void	ft_outfile_process(t_inputs *set)
 	{
 		close(set->fd_pipe[0]);
 		close(set->fd_pipe[1]);
+        close(set->out_fd);
 		ft_execute_cmd(set->input[set->len - 2], set);
 	}
 	free(set->fd_pipe);
